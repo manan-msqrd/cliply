@@ -2,11 +2,12 @@
 
 import { useRouter } from "next/router";
 import { useRef, useState } from "react"
+import { createUploadUrl, getAssetsIdFromUpload } from "../action";
 
 export default function ScreenRecorder() {
     const [isRecording, setIsRecording] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
-    const [mediaBlobUrl, setMediaBlobUrl] = useState<Blob | null>(null);
+    const [mediaBlob, setMediaBlob] = useState<Blob | null>(null);
 
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const chunksRef = useRef<Blob[]>([]);
@@ -60,7 +61,7 @@ export default function ScreenRecorder() {
             //handle recording completion
             mediaRecorder.onstop = () => {
                 const blob = new Blob(chunksRef.current, { type: "video/webm" });
-                setMediaBlobUrl(blob);
+                setMediaBlob(blob);
 
                 if (liveVideoRef.current) {
                     liveVideoRef.current.srcObject = null;
@@ -91,7 +92,33 @@ export default function ScreenRecorder() {
     }
 
     const handleUpload = async () => {
+        if (!mediaBlob) return;
 
+        setIsUploading(true);
+
+        try {
+            // 1. Get Signed upload url from server
+            const uploadConfig = await createUploadUrl();
+
+            // 2. Upload directly to mux
+            await fetch(uploadConfig.url, {
+                method: 'PUT',
+                body: mediaBlob,
+            })
+
+            // 3. poll until processing completes
+            while (true) {
+                const result = await getAssetsIdFromUpload(uploadConfig.id);
+                if (result.playbackId) {
+                    router.push(`/video/${result.playbackId}`);
+                    return;
+                }
+                await new Promise((resolve) => setTimeout(resolve, 1000));
+            }
+        } catch (error) {
+            console.log("Error uploading video", error);
+            setIsUploading(false);
+        }
     }
 
     return (
