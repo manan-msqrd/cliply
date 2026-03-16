@@ -1,8 +1,9 @@
 "use client"
 
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import { useRef, useState } from "react"
 import { createUploadUrl, getAssetsIdFromUpload } from "../action";
+import { Loader2, Monitor, StopCircle, Video } from "lucide-react"
 
 export default function ScreenRecorder() {
     const [isRecording, setIsRecording] = useState(false);
@@ -14,7 +15,6 @@ export default function ScreenRecorder() {
     const screenStreamRef = useRef<MediaStream | null>(null);
     const micStreamRef = useRef<MediaStream | null>(null);
     const liveVideoRef = useRef<HTMLVideoElement | null>(null);
-    const liveAudioRef = useRef<HTMLAudioElement | null>(null);
 
     const router = useRouter();
 
@@ -122,8 +122,62 @@ export default function ScreenRecorder() {
     }
 
     return (
-        <div>
-            <h1>Screen Recorder</h1>
+        <div className="flex flex-col items-center gap-6 bg-slate-900 p-8 rounded-xl border border-slate-700 w-full max-w-md shadow-2xl">
+            <h2 className="text-2xl font-bold text-white">
+                {isRecording ? "Recording..." : "New Recording"}
+            </h2>
+
+            {/* Preview Area */}
+            <div className="w-full aspect-video bg-black rounded-lg border border-slate-800 flex items-center justify-center relative overflow-hidden">
+
+                {/* Live Preview (while recording) */}
+                <video ref={liveVideoRef} autoPlay muted playsInline className={`w-full h-full object-cover ${isRecording ? "block" : "hidden"}`} />
+
+                {/* Recording Ready State */}
+                {!isRecording && mediaBlob && (
+                    <div className="text-emerald-600 flex flex-col items-center">
+                        <Video className="w-12 h-12 mb-2" />
+                        <span>Recoring Ready</span>
+                    </div>
+                )}
+
+                {/* Idle State */}
+                {!isRecording && !mediaBlob && (
+                    <div className="text-slate-600 flex flex-col items-center">
+                        <Monitor className="w-12 h-12 mb-2 opacity-50" />
+                        <span>Preview Area</span>
+                    </div>
+                )}
+
+                {/* Recording Indicator */}
+                {isRecording && (
+                    <div className="absolute top-4 right-4 animate-pulse">
+                        <div className="w-3 h-3 bg-red-500 rounded-full shadow-[0_0_10px_rgba(239,68,68,0.6)]"></div>
+                    </div>
+                )}
+            </div>
+
+            {/* Controls */}
+            <div className="flex w-full gap-4">
+                {!isRecording && !mediaBlob && (
+                    <button onClick={startRecording} className="w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
+                        Start Recording
+                    </button>
+                )}
+
+                {isRecording && (
+                    <button onClick={stopRecording} className="w-full py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium flex justify-center items-center gap-2">
+                        <StopCircle className="w-5 h-5" /> Stop Recording
+                    </button>
+                )}
+
+                {mediaBlob && (
+                    <button onClick={handleUpload} disabled={isUploading} className="w-full py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium flex justify-center items-center gap-2 disabled:opacity-50">
+                        {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Upload & Share"}
+                    </button>
+                )}
+            </div>
+
         </div>
     )
 }
