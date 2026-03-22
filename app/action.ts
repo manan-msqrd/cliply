@@ -99,8 +99,13 @@ export async function getAssetStatus(playbackId: string) {
                 status: asset.status,
                 transScripts,
                 transcriptionStatus,
-
             }
+        }
+
+        return {
+            status: asset?.status || "preparing",
+            transScripts: [],
+            transcriptionStatus: "preparing"
         }
     } catch (error) {
         return { status: "error", transScripts: [], transcriptionStatus: "error" }
