@@ -18,7 +18,7 @@ export default function VideoThumbnail({ playbackId }: { playbackId: string }) {
 
     return (
         <div className="w-full h-full relative" onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
-            <Image src={isHovered ? gifUrl : posterUrl} alt="Video Thumbnail" fill unoptimized className="w-full h-full object-cover" onError={() => setHasError(true)} width={320} height={180} />
+            <Image src={isHovered ? gifUrl : posterUrl} alt="Video Thumbnail" fill unoptimized className="w-full h-full object-cover" onError={() => setHasError(true)} />
         </div>
     )
 }
